@@ -250,6 +250,11 @@ MulticopterAttitudeControl::vehicle_attitude_setpoint_poll()
 
 	if (updated) {
 		orb_copy(ORB_ID(vehicle_attitude_setpoint), _v_att_sp_sub, &_v_att_sp);
+		PX4_INFO("Att*:\t%8.4f\t%8.4f\t%8.4f\t%8.4f",
+			(double)_v_att_sp.q_d[0],
+			(double)_v_att_sp.q_d[1],
+			(double)_v_att_sp.q_d[2],
+			(double)_v_att_sp.q_d[3]);
 	}
 }
 
@@ -689,7 +694,7 @@ MulticopterAttitudeControl::run()
 				_v_rates_sp.yaw = _rates_sp(2);
 				_v_rates_sp.thrust = _thrust_sp;
 				_v_rates_sp.timestamp = hrt_absolute_time();
-
+				
 				if (_v_rates_sp_pub != nullptr) {
 					orb_publish(_rates_sp_id, _v_rates_sp_pub, &_v_rates_sp);
 

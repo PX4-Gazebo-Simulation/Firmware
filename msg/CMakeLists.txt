@@ -128,6 +128,8 @@ set(msg_files
 	vehicle_status_flags.msg
 	vtol_vehicle_status.msg
 	wind_estimate.msg
+	# custom messages:
+	task_status_change_p2m.msg
 	)
 
 if(NOT EXTERNAL_MODULES_LOCATION STREQUAL "")

@@ -137,6 +137,9 @@ MavlinkReceiver::MavlinkReceiver(Mavlink *parent) :
 	_debug_value_pub(nullptr),
 	_debug_vect_pub(nullptr),
 	_gps_inject_data_pub(nullptr),
+	/**********************************************************/
+	_task_status_change_p2m_pub(nullptr),
+	/**********************************************************/
 	_command_ack_pub(nullptr),
 	_control_mode_sub(orb_subscribe(ORB_ID(vehicle_control_mode))),
 	_actuator_armed_sub(orb_subscribe(ORB_ID(actuator_armed))),
@@ -338,6 +341,12 @@ MavlinkReceiver::handle_message(mavlink_message_t *msg)
 	case MAVLINK_MSG_ID_DEBUG_VECT:
 		handle_message_debug_vect(msg);
 		break;
+
+	/****************************************************/
+	case MAVLINK_MSG_ID_TASK_STATUS_CHANGE_P2M:
+		handle_message_task_status_change_p2m(msg);
+		break;
+	/****************************************************/
 
 	default:
 		break;
@@ -2266,6 +2275,27 @@ MavlinkReceiver::handle_message_hil_state_quaternion(mavlink_message_t *msg)
 		}
 	}
 }
+/**************************************************************/
+void MavlinkReceiver::handle_message_task_status_change_p2m(mavlink_message_t *msg)
+{
+	mavlink_task_status_change_p2m_t task_status_change;
+	mavlink_msg_task_status_change_p2m_decode(msg, &task_status_change);
+
+	struct task_status_change_p2m_s f;
+	memset(&f, 0, sizeof(f));
+
+	f.timestamp=hrt_absolute_time();
+	f.spray_duration=task_status_change.spray_duration;
+	f.task_status=task_status_change.task_status;
+	f.loop_value=task_status_change.loop_value;
+
+	if (_task_status_change_p2m_pub == nullptr) {
+		_task_status_change_p2m_pub = orb_advertise(ORB_ID(task_status_change_p2m), &f);
+	} else {
+		orb_publish(ORB_ID(task_status_change_p2m), _task_status_change_p2m_pub, &f);
+	}
+}
+/**************************************************************/
 
 void MavlinkReceiver::handle_message_named_value_float(mavlink_message_t *msg)
 {

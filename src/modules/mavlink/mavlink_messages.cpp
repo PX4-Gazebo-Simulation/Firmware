@@ -107,6 +107,9 @@
 #include <uORB/topics/vehicle_air_data.h>
 #include <uORB/topics/vehicle_magnetometer.h>
 #include <uORB/uORB.h>
+/******************************************/
+#include <uORB/topics/task_status_change_p2m.h>
+/******************************************/
 
 static uint16_t cm_uint16_from_m_float(float m);
 
@@ -4063,6 +4066,76 @@ protected:
 	}
 };
 
+/***************************************************************/
+class MavlinkStreamTaskStatusChangeP2M : public MavlinkStream
+{
+public:
+	const char *get_name() const
+	{
+		return MavlinkStreamTaskStatusChangeP2M::get_name_static();
+	}
+
+	static const char *get_name_static()
+	{
+		return "TASK_STATUS_CHANGE_P2M";
+	}
+
+	static uint16_t get_id_static()
+	{
+		return MAVLINK_MSG_ID_TASK_STATUS_CHANGE_P2M;
+	}
+
+    uint16_t get_id()
+    {
+        return get_id_static();
+    }
+
+	static MavlinkStream *new_instance(Mavlink *mavlink)
+	{
+		return new MavlinkStreamTaskStatusChangeP2M(mavlink);
+	}
+
+	unsigned get_size()
+	{
+		return (_task_status_change_p2m_time > 0) ? MAVLINK_MSG_ID_TASK_STATUS_CHANGE_P2M_LEN + MAVLINK_NUM_NON_PAYLOAD_BYTES : 0;
+	}
+
+private:
+	MavlinkOrbSubscription *_task_status_change_p2m_sub;
+	uint64_t _task_status_change_p2m_time;
+
+	/* do not allow top copying this class */
+	MavlinkStreamTaskStatusChangeP2M(MavlinkStreamTaskStatusChangeP2M &);
+	MavlinkStreamTaskStatusChangeP2M& operator = (const MavlinkStreamTaskStatusChangeP2M &);
+
+protected:
+	explicit MavlinkStreamTaskStatusChangeP2M(Mavlink *mavlink) : MavlinkStream(mavlink),
+		_task_status_change_p2m_sub(_mavlink->add_orb_subscription(ORB_ID(task_status_change_p2m))),
+		_task_status_change_p2m_time(0)
+	{}
+
+	bool send(const hrt_abstime t)
+	{
+		struct task_status_change_p2m_s task_status_change_p2m;
+
+		bool updated = _task_status_change_p2m_sub->update(&_task_status_change_p2m_time, &task_status_change_p2m);
+
+		if (updated) {
+
+			mavlink_task_status_change_p2m_t msg;
+
+			msg.spray_duration=task_status_change_p2m.spray_duration;
+			msg.task_status=task_status_change_p2m.task_status;
+			msg.loop_value=task_status_change_p2m.loop_value;
+
+			mavlink_msg_task_status_change_p2m_send_struct(_mavlink->get_channel(), &msg);
+			return true;
+		}
+		return false;
+	}
+};
+/***************************************************************/
+
 static const StreamListItem streams_list[] = {
 	StreamListItem(&MavlinkStreamHeartbeat::new_instance, &MavlinkStreamHeartbeat::get_name_static, &MavlinkStreamHeartbeat::get_id_static),
 	StreamListItem(&MavlinkStreamStatustext::new_instance, &MavlinkStreamStatustext::get_name_static, &MavlinkStreamStatustext::get_id_static),
@@ -4113,7 +4186,10 @@ static const StreamListItem streams_list[] = {
 	StreamListItem(&MavlinkStreamWind::new_instance, &MavlinkStreamWind::get_name_static, &MavlinkStreamWind::get_id_static),
 	StreamListItem(&MavlinkStreamMountOrientation::new_instance, &MavlinkStreamMountOrientation::get_name_static, &MavlinkStreamMountOrientation::get_id_static),
 	StreamListItem(&MavlinkStreamHighLatency2::new_instance, &MavlinkStreamHighLatency2::get_name_static, &MavlinkStreamHighLatency2::get_id_static),
-	StreamListItem(&MavlinkStreamGroundTruth::new_instance, &MavlinkStreamGroundTruth::get_name_static, &MavlinkStreamGroundTruth::get_id_static)
+	StreamListItem(&MavlinkStreamGroundTruth::new_instance, &MavlinkStreamGroundTruth::get_name_static, &MavlinkStreamGroundTruth::get_id_static),
+	/************************************************************************/
+	StreamListItem(&MavlinkStreamTaskStatusChangeP2M::new_instance, &MavlinkStreamTaskStatusChangeP2M::get_name_static, &MavlinkStreamTaskStatusChangeP2M::get_id_static)
+	/************************************************************************/
 };
 
 const char *get_stream_name(const uint16_t msg_id)

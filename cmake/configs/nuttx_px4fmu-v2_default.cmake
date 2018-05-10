@@ -128,6 +128,12 @@ set(config_module_list
 	modules/vtol_att_control
 
 	#
+	# Custom App
+	#
+	modules/mavlink_msg_send_test
+	modules/mavlink_msg_receive_test
+
+	#
 	# Logging
 	#
 	modules/logger

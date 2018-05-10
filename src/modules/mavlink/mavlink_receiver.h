@@ -85,6 +85,10 @@
 #include "mavlink_log_handler.h"
 #include "mavlink_timesync.h"
 
+/*************************************************************/
+#include <uORB/topics/task_status_change_p2m.h>
+/*************************************************************/
+
 class Mavlink;
 
 class MavlinkReceiver
@@ -158,6 +162,9 @@ private:
 	void handle_message_named_value_float(mavlink_message_t *msg);
 	void handle_message_debug(mavlink_message_t *msg);
 	void handle_message_debug_vect(mavlink_message_t *msg);
+	/******************************************************************/
+	void handle_message_task_status_change_p2m(mavlink_message_t *msg);
+	/******************************************************************/
 
 	void *receive_thread(void *arg);
 
@@ -237,6 +244,9 @@ private:
 	orb_advert_t _debug_vect_pub;
 	static const int _gps_inject_data_queue_size = 6;
 	orb_advert_t _gps_inject_data_pub;
+	/************************************************************/
+	orb_advert_t _task_status_change_p2m_pub;
+	/************************************************************/
 	orb_advert_t _command_ack_pub;
 	int _control_mode_sub;
 	int _actuator_armed_sub;
